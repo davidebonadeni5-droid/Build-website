@@ -306,7 +306,7 @@
     },
     {
       id: 'prodotto', label: 'App / Startup / SaaS', emoji: '🚀',
-      keywords: ['app', 'startup', 'saas', 'software', 'piattaform', 'gestional', 'intelligenza artificiale', ' ai ', 'tecnologi', 'digitale', 'abbonament', 'automazion', 'dashboard', 'web app', 'servizio online', 'tool', 'crm', 'fintech', 'marketplace'],
+      keywords: ['app', 'startup', 'saas', 'software', 'piattaform', 'gestional', 'intelligenza artificiale', ' ai ', 'tecnologi', 'digitale', 'automazion', 'dashboard', 'web app', 'servizio online', 'tool', 'crm', 'fintech', 'marketplace', 'app per', 'software per', 'piattaforma per', 'gestionale per'],
       defaultTheme: 'aurora',
       defaultSections: ['servizi', 'numeri', 'prezzi', 'testimonianze', 'faq', 'cta', 'contatti'],
       itemsSection: 'servizi', itemsLabel: 'Funzionalità principali',
@@ -349,7 +349,7 @@
     },
     {
       id: 'fitness', label: 'Palestra / Fitness / Sport', emoji: '💪',
-      keywords: ['palestr', 'fitness', 'yoga', 'pilates', 'crossfit', 'personal trainer', 'allenament', 'sport', 'boxe', 'arti marziali', 'karate', 'danza', 'ballo', 'nuoto', 'piscina', 'calcetto', 'tennis', 'padel', 'running', 'functional', 'spinning', 'wellness'],
+      keywords: ['palestr', 'fitness', 'yoga', 'pilates', 'danza', 'crossfit', 'personal trainer', 'allenament', 'sport', 'boxe', 'arti marziali', 'karate', 'ballo', 'nuoto', 'piscina', 'calcetto', 'tennis', 'padel', 'running', 'functional', 'spinning', 'wellness'],
       defaultTheme: 'audace',
       defaultSections: ['servizi', 'numeri', 'prezzi', 'team', 'testimonianze', 'orari', 'contatti'],
       itemsSection: 'servizi', itemsLabel: 'Corsi e servizi',
@@ -615,7 +615,7 @@
     },
     {
       id: 'associazione', label: 'Associazione / No-profit / Club', emoji: '🤝',
-      keywords: ['associazion', 'no-profit', 'non profit', 'onlus', 'volontar', 'club', 'circolo', 'parrocchi', 'oratorio', 'comitato', 'fondazione', 'cooperativ', 'pro loco', 'scout', 'squadra', 'asd', 'polisportiva', 'scuola', 'corsi', 'beneficenz', 'canile', 'gattile', 'banda', 'coro', 'teatro'],
+      keywords: ['associazion', 'no-profit', 'non profit', 'onlus', 'volontar', 'club', 'circolo', 'parrocchi', 'oratorio', 'comitato', 'fondazione', 'cooperativ', 'pro loco', 'scout', 'squadra', 'asd', 'polisportiva', 'scuola', 'beneficenz', 'canile', 'gattile', 'banda', 'coro', 'teatro'],
       defaultTheme: 'calore',
       defaultSections: ['chi', 'servizi', 'numeri', 'programma', 'team', 'cta', 'contatti'],
       itemsSection: 'servizi', itemsLabel: 'Attività e progetti',

@@ -864,6 +864,14 @@
     }
     const d = safeDetect(idea);
     const filled = [];
+    // Scheda già compilata con un'altra idea: chiedi se sostituirla (contatti, logo e foto restano)
+    const hasData = state.name || state.tagline || state.description || state.category || state.items;
+    if (hasData && state.description !== idea) {
+      const replace = window.confirm('La scheda è già compilata.\n\nVuoi sostituirla con questa nuova idea?\n(Contatti, logo e foto restano come sono.)');
+      if (!replace) { setStatus('Ok, ho lasciato la scheda com\'era.', ''); return; }
+      state.name = ''; state.tagline = ''; state.description = ''; state.category = ''; state.items = '';
+      state.theme = ''; state.accentColor = ''; state.sections = []; state.sectionsCustom = false;
+    }
     if (d.name && !state.name) { state.name = String(d.name); filled.push('f-name'); }
     if (d.tagline && !state.tagline) { state.tagline = String(d.tagline); filled.push('f-tagline'); }
     if (!state.description) { state.description = idea; filled.push('f-description'); }
