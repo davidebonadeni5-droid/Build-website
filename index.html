@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IdeaSito — Descrivi la tua idea, ottieni un sito</title>
+  <meta name="description" content="Descrivi la tua idea e l'AI crea il tuo sito web. Gratis.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://js.puter.com/v2/"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">✦ IdeaSito</div>
+    <span class="badge">Gratis</span>
+  </header>
+
+  <main class="layout">
+    <!-- Pannello sinistro: input -->
+    <section class="panel input-panel">
+      <h1>Descrivi la tua idea</h1>
+      <p class="sub">Scrivi cosa vuoi e l'AI crea il sito per te. Poi puoi chiedere modifiche e scaricarlo.</p>
+
+      <textarea id="idea" rows="7" placeholder="Es: Un sito per la mia pizzeria a Napoli, con menù, orari, foto e un pulsante per prenotare su WhatsApp. Colori caldi, stile rustico."></textarea>
+
+      <div class="examples">
+        <span class="label">Esempi:</span>
+        <button class="chip example" data-text="Portfolio per un fotografo di matrimoni, galleria foto elegante, sezione contatti e prezzi. Stile minimal bianco e nero.">📷 Portfolio</button>
+        <button class="chip example" data-text="Landing page per un'app di fitness chiamata FitGo: hero con slogan, funzionalità, prezzi con 3 piani, testimonianze, FAQ. Colori energici.">💪 App fitness</button>
+        <button class="chip example" data-text="Sito per un bar caffetteria di quartiere: menù con prezzi, orari di apertura, mappa, chi siamo. Stile accogliente.">☕ Bar</button>
+        <button class="chip example" data-text="Pagina personale di uno sviluppatore web: chi sono, competenze, progetti con card, contatti. Tema scuro moderno.">💻 Dev personale</button>
+      </div>
+
+      <div class="row">
+        <label class="field">
+          <span>Stile</span>
+          <select id="style">
+            <option value="">Lascia scegliere all'AI</option>
+            <option value="moderno e pulito">Moderno</option>
+            <option value="minimal, molto spazio bianco">Minimal</option>
+            <option value="colorato e giocoso">Colorato</option>
+            <option value="scuro ed elegante">Scuro elegante</option>
+            <option value="rustico e caldo">Rustico</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Motore</span>
+          <select id="engine">
+            <option value="claude-sonnet-4">AI · Claude (consigliato)</option>
+            <option value="gpt-4o-mini">AI · GPT-4o mini (veloce)</option>
+            <option value="offline">Offline · Template (senza AI)</option>
+          </select>
+        </label>
+      </div>
+
+      <button id="generate" class="btn primary">✨ Crea il mio sito</button>
+
+      <div id="refine-box" class="refine hidden">
+        <h2>Vuoi cambiare qualcosa?</h2>
+        <textarea id="refine" rows="3" placeholder="Es: Rendi il titolo più grande, aggiungi una sezione recensioni, cambia i colori in blu."></textarea>
+        <button id="refine-btn" class="btn">🔁 Applica modifica</button>
+      </div>
+
+      <p id="status" class="status" role="status"></p>
+
+      <details class="history">
+        <summary>Siti creati in precedenza</summary>
+        <ul id="history-list"></ul>
+      </details>
+    </section>
+
+    <!-- Pannello destro: anteprima -->
+    <section class="panel preview-panel">
+      <div class="preview-toolbar">
+        <div class="tabs">
+          <button class="tab active" data-view="preview">Anteprima</button>
+          <button class="tab" data-view="code">Codice</button>
+        </div>
+        <div class="devices">
+          <button class="icon-btn device active" data-w="100%" title="Desktop">🖥️</button>
+          <button class="icon-btn device" data-w="768px" title="Tablet">📱</button>
+          <button class="icon-btn device" data-w="390px" title="Telefono">📞</button>
+        </div>
+        <div class="actions">
+          <button id="copy" class="btn small" disabled>Copia</button>
+          <button id="open" class="btn small" disabled>Apri</button>
+          <button id="download" class="btn small primary" disabled>⬇ Scarica</button>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div id="empty" class="empty">
+          <div class="empty-icon">🌐</div>
+          <p>Il tuo sito apparirà qui.</p>
+        </div>
+        <div id="frame-wrap" class="frame-wrap hidden">
+          <iframe id="preview" title="Anteprima del sito" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
+        </div>
+        <pre id="code" class="code hidden"><code id="code-text"></code></pre>
+      </div>
+    </section>
+  </main>
+
+  <script src="templates.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
