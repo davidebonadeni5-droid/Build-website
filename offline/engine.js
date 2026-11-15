@@ -202,13 +202,15 @@
 
   function catScore(cat, low) {
     let s = 0;
-    (cat.keywords || []).forEach((k) => {
+    // Le prime 6 parole chiave di ogni categoria sono le più tipiche: valgono il doppio
+    (cat.keywords || []).forEach((k, i) => {
       const kk = k.trim().toLowerCase();
       if (!kk) return;
+      const w = i < 6 ? 2 : 1;
       if (kk.length <= 4) {
         const re = new RegExp('(^|[^\\p{L}])' + kk.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'u');
-        if (re.test(low)) s += 1;
-      } else if (low.includes(kk)) s += kk.length > 6 ? 1.4 : 1;
+        if (re.test(low)) s += w;
+      } else if (low.includes(kk)) s += (kk.length > 6 ? 1.4 : 1) * w;
     });
     return s;
   }
