@@ -126,6 +126,40 @@
     return groups.filter((g) => g.items.length);
   }
 
+  /* ── «Il tuo menù» (brief.menu, editor strutturato): categorie → gruppi, con indici originali per data-e ── */
+  const MENU_TAGS = { veg: ['🌱', 'Vegetariano'], vegan: ['🌿', 'Vegano'], hot: ['🌶️', 'Piccante'], gf: ['🚫🌾', 'Senza glutine'], star: ['⭐', 'Consigliato'], new: ['🆕', 'Novità'] };
+  function normMenu(m) {
+    if (!Array.isArray(m)) return [];
+    return m.slice(0, 30).map((c) => ({
+      category: clean(c && c.category),
+      items: (c && Array.isArray(c.items) ? c.items : []).slice(0, 200).map((it) => {
+        it = it || {};
+        let price = fmtPrice(it.price || '');
+        if (/^\d{1,4}(?:[.,]\d{1,2})?$/.test(price)) price += '€';
+        return { name: clean(it.name), desc: clean(it.description || it.desc), price, tags: (Array.isArray(it.tags) ? it.tags : []).filter((t) => MENU_TAGS[t]), photo: safeSrc(it.photo) };
+      }),
+    }));
+  }
+  const menuHasItems = (m) => Array.isArray(m) && m.some((c) => c.items.some((it) => it.name));
+  function menuGroups(menu, mode) {
+    return menu.map((c, ci) => ({
+      title: c.category, ci,
+      items: c.items.map((it, ii) => {
+        const x = { name: it.name, desc: it.desc, price: it.price, time: '', tag: '', tags: it.tags, photo: it.photo, ci, ii };
+        if (mode === 'timeline') {
+          const tm = x.name.match(/^((?:ore\s+)?\d{1,2}(?:[:.]\d{2})?(?:\s*[-–]\s*\d{1,2}(?:[:.]\d{2})?)?)(?:\s*[-–—:|]\s*|\s+)(.+)$/i);
+          if (tm && /\d/.test(tm[1])) { x.time = tm[1].replace(/^ore\s+/i, '').replace(/\./g, ':'); x.name = tm[2]; }
+          else if (!x.time && /^\d{1,2}[:.]\d{2}$/.test(x.price)) { x.time = x.price.replace('.', ':'); x.price = ''; }
+        }
+        return x;
+      }).filter((x) => x.name),
+    })).filter((g) => g.items.length);
+  }
+  // data-e per le voci che arrivano da brief.menu
+  const de = (x, f) => (x && x.ci != null ? ` data-e="menu.item.${x.ci}.${x.ii}.${f}"` : '');
+  const tagBadges = (x) => (x && x.tags && x.tags.length ? `<span class="mt">${x.tags.map((t) => `<span class="mt-b mt-${t}"><span aria-hidden="true">${MENU_TAGS[t][0]}</span>${esc(MENU_TAGS[t][1])}</span>`).join('')}</span>` : '');
+  const photoDiv = (x, cls) => `<div class="m img${cls ? ' ' + cls : ''}" role="img" aria-label="${esc(x.name)}" style="background-image:${esc(cssUrl(x.photo))}"></div>`;
+
   function parseHours(text) {
     return String(text || '').split(/\r?\n/).map(clean).filter(Boolean).map((l) => {
       const m = l.match(/^(.*?[\p{L}.)])\s*[:\-–—]?\s+((?:\d|h24|chius|su appunt|solo|aperto|24|dalle|ore).*)$/iu);
@@ -715,6 +749,24 @@ button{font:inherit;color:inherit}
 .mi-p{font-family:var(--fu);font-weight:700;color:var(--accent-text);white-space:nowrap}
 .mi-d{color:var(--muted);font-size:.96rem;margin:4px 0 0;max-width:48ch}
 @media(max-width:820px){.menu-wrap{grid-template-columns:minmax(0,1fr)}}
+/* menù dell'utente (brief.menu) */
+.m-tabs{position:sticky;top:calc(var(--navh) + 10px);z-index:30;display:flex;justify-content:center;margin:0 auto clamp(32px,5vw,56px);max-width:100%;pointer-events:none}
+.m-tabs-in{pointer-events:auto;display:flex;gap:6px;max-width:100%;overflow-x:auto;scrollbar-width:none;padding:6px;border-radius:999px;background:var(--m-tabs-bg,var(--bg));border:1px solid var(--line);box-shadow:0 10px 30px -18px rgba(0,0,0,.45)}
+.m-tabs-in::-webkit-scrollbar{display:none}
+.m-tabs a{flex:none;padding:9px 16px;border-radius:999px;font:600 .88rem/1.1 var(--fu);text-decoration:none;color:var(--text);white-space:nowrap;transition:background .2s,color .2s}
+.m-tabs a:hover{background:var(--accent-soft);color:var(--accent-text)}
+.m-tabs a.on{background:var(--accent);color:var(--accent-ink)}
+.mg-h[id]{scroll-margin-top:calc(var(--navh) + 90px)}
+.menu-wrap.one{grid-template-columns:minmax(0,1fr);max-width:760px;margin-inline:auto}
+.mi.has-ph{display:grid;grid-template-columns:clamp(64px,8vw,84px) minmax(0,1fr);gap:16px;align-items:start}
+.mi-ph{position:relative;aspect-ratio:1;border-radius:calc(var(--r) * .6 + 4px);background:var(--bg2) center/cover no-repeat}
+.mi-b{min-width:0}
+.mi-n{overflow-wrap:anywhere}
+.mt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mt-b{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 7px;border-radius:999px;font:600 .72rem/1.3 var(--fu);letter-spacing:.02em;background:var(--accent-soft);color:var(--accent-text);border:1px solid transparent}
+.mt-b.mt-veg,.mt-b.mt-vegan{background:rgba(34,160,90,.12);color:var(--m-green,#1d7a45)}
+.mt-b.mt-hot{background:rgba(220,60,40,.11);color:var(--m-red,#b3321f)}
+.mt-b.mt-gf{background:rgba(190,140,30,.14);color:var(--m-amber,#8a5a00)}
 /* galleria */
 .gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:clamp(170px,21vw,290px);gap:var(--gg,14px);grid-auto-flow:dense}
 .g-it{position:relative;overflow:hidden;border-radius:var(--r);border:0;padding:0;margin:0;background:var(--bg2);cursor:zoom-in;display:block;text-align:left;width:100%;height:100%}
@@ -1645,6 +1697,7 @@ h1,h2,h3{font-weight:700}
       accentColor: isHex(b.accentColor) ? b.accentColor.trim() : (det.accentColor || ''),
       sections: Array.isArray(b.sections) ? b.sections.slice() : [],
       items: String(b.items || ''),
+      menu: normMenu(b.menu),
       contacts: Object.assign({}, det.contacts || {}, b.contacts || {}),
       logo: safeSrc(b.logo) || null,
       photos: (Array.isArray(b.photos) ? b.photos : []).map((p) => (typeof p === 'string' ? { src: p, caption: '' } : p || {})).map((p) => ({ src: safeSrc(p.src), caption: clean(p.caption) })).filter((p) => p.src),
@@ -1706,9 +1759,11 @@ h1,h2,h3{font-weight:700}
     ctx.desc = b.description;
     ctx.sections = b.sections;
     ctx.has = (id) => ctx.sections.includes(id);
-    const target = (b.items.trim() && (ctx.has(cat.itemsSection) ? cat.itemsSection : ['menu', 'prodotti', 'servizi', 'progetti', 'programma'].find(ctx.has))) || null;
+    const userMenu = menuHasItems(b.menu);
+    const target = ((b.items.trim() || userMenu) && (ctx.has(cat.itemsSection) ? cat.itemsSection : ['menu', 'prodotti', 'servizi', 'progetti', 'programma'].find(ctx.has))) || null;
     ctx.itemsFor = (sec) => {
       const mode = sec === 'programma' ? 'timeline' : '';
+      if (sec === target && userMenu) return { groups: menuGroups(b.menu, mode), user: true, menu: true };
       if (sec === target) return { groups: parseItems(b.items, mode), user: true };
       if (sec === cat.itemsSection) return { groups: parseItems(tpl(c.items, ctx), mode), user: false };
       const donor = { menu: 'ristorante', prodotti: 'negozio', progetti: 'portfolio', programma: 'evento', servizi: 'altro' }[sec];
@@ -1731,8 +1786,8 @@ h1,h2,h3{font-weight:700}
 
   // immagine: foto caricata (via variabile CSS, senza duplicare i dati) oppure arte generata
   function media(ctx, photo, seed, v, label, alt) {
-    if (photo) return `<div class="m img" role="img" aria-label="${esc(alt || photo.cap || ctx.name)}" style="background-image:var(${photo.v})"></div>`;
-    return `<div class="m">${art(ctx, seed, v, label)}</div>`;
+    if (photo) return `<div class="m img" data-e="img.${seed}" role="img" aria-label="${esc(alt || photo.cap || ctx.name)}" style="background-image:var(${photo.v})"></div>`;
+    return `<div class="m" data-e="img.${seed}">${art(ctx, seed, v, label)}</div>`;
   }
 
   function sectionHead(ctx, id, idx, opts) {
@@ -1744,14 +1799,14 @@ h1,h2,h3{font-weight:700}
     const intro = opts.intro != null ? opts.intro : copy[2];
     title = tpl(title, ctx);
     const n = String(idx + 1).padStart(2, '0');
-    return `<div class="sh rv${opts.center ? ' c' : ''}"><span class="sh-n">${n}</span><span class="sh-k" data-n="(${n})">${esc(k)}</span><h2 class="sh-t">${fancy(title)}</h2>${intro ? `<p class="sh-p">${esc(tpl(intro, ctx))}</p>` : ''}</div>`;
+    return `<div class="sh rv${opts.center ? ' c' : ''}"><span class="sh-n">${n}</span><span class="sh-k" data-e="${id}.kicker" data-n="(${n})">${esc(k)}</span><h2 class="sh-t" data-e="${id}.title">${fancy(title)}</h2>${intro ? `<p class="sh-p" data-e="${id}.subtitle">${esc(tpl(intro, ctx))}</p>` : ''}</div>`;
   }
 
   /* ── NAV ── */
   function brandHTML(ctx, cls) {
     const inner = ctx.logo
-      ? `<img class="brand-logo" src="${esc(ctx.logo)}" alt="${esc(ctx.name)}">`
-      : `<span class="mono" aria-hidden="true">${esc(initials(ctx.name))}</span><span class="brand-name">${esc(ctx.name)}</span>`;
+      ? `<img class="brand-logo" data-e="nav.logo" src="${esc(ctx.logo)}" alt="${esc(ctx.name)}">`
+      : `<span class="mono" aria-hidden="true">${esc(initials(ctx.name))}</span><span class="brand-name" data-e="nav.brand">${esc(ctx.name)}</span>`;
     return `<a class="brand${cls ? ' ' + cls : ''}" href="#top" aria-label="${esc(ctx.name)} — torna su">${inner}</a>`;
   }
   function navLinks(ctx) {
@@ -1761,13 +1816,13 @@ h1,h2,h3{font-weight:700}
       const l = over && over[0] ? over[0] : SEC_LABEL[s];
       return s === 'chi' && ctx.first ? 'Chi sono' : s === 'dove' && ctx.first ? 'Dove sono' : l;
     };
-    return ids.slice(0, 5).map((s, i) => `<a href="#${s}">${ctx.th === 'minimal' ? `<b>0${i + 1}</b>` : ''}${esc(lab(s))}</a>`).join('');
+    return ids.slice(0, 5).map((s, i) => `<a href="#${s}" data-e="nav.link.${s}">${ctx.th === 'minimal' ? `<b>0${i + 1}</b>` : ''}${esc(lab(s))}</a>`).join('');
   }
   function navHTML(ctx) {
     const ctaHref = ctx.has('contatti') ? '#contatti' : ctx.contactAction.href;
     const ctaLabel = ctx.has('contatti') ? (ctx.first ? 'Contattami' : 'Contattaci') : ctx.contactAction.label;
     const btnCls = { elegante: 'btn btn-s', audace: 'btn btn-s', magazine: 'btn btn-p', aurora: 'btn btn-p', minimal: 'btn btn-p', calore: 'btn btn-p', giocoso: 'btn btn-p' }[ctx.th];
-    const menu = `<div class="menu" id="menu">${navLinks(ctx)}<a class="${btnCls}" href="${esc(ctaHref)}"${ext(ctaHref)}>${esc(ctaLabel)}</a></div>`;
+    const menu = `<div class="menu" id="menu">${navLinks(ctx)}<a class="${btnCls}" data-e="nav.cta" href="${esc(ctaHref)}"${ext(ctaHref)}>${esc(ctaLabel)}</a></div>`;
     const burger = `<button class="burger" type="button" aria-label="Apri il menu" aria-expanded="false" aria-controls="menu"><span></span></button>`;
     if (ctx.th === 'magazine') {
       const d = new Date();
@@ -1784,7 +1839,7 @@ h1,h2,h3{font-weight:700}
   function heroBtns(ctx, cls) {
     const p = ctx.primary, s = ctx.secondary;
     const arrow = ctx.th === 'minimal' || ctx.th === 'audace' || ctx.th === 'aurora' ? icon('arrow') : '';
-    return `<div class="btns ${cls || ''}"><a class="btn btn-p" href="${esc(p.href)}"${ext(p.href)}>${esc(p.label)}${arrow}</a>${s ? `<a class="btn btn-s" href="${esc(s.href)}">${esc(s.label)}</a>` : ''}</div>`;
+    return `<div class="btns ${cls || ''}"><a class="btn btn-p" data-e="hero.cta1" href="${esc(p.href)}"${ext(p.href)}>${esc(p.label)}${arrow}</a>${s ? `<a class="btn btn-s" data-e="hero.cta2" href="${esc(s.href)}">${esc(s.label)}</a>` : ''}</div>`;
   }
   function eyebrow(ctx) {
     const e = ctx.c.eyebrow || ctx.cat.label;
@@ -1797,8 +1852,8 @@ h1,h2,h3{font-weight:700}
       const ph = ctx.photos[0];
       const t = ctx.name.length > 20 ? ' t-l' : '';
       return `<header class="hero" id="top">
-<div class="h-bg">${ph ? `<div class="img" role="img" aria-label="${esc(ph.cap || ctx.name)}" style="background-image:var(${ph.v})"></div>` : art(ctx, 'hero', 'hero')}</div><div class="h-veil"></div>
-<div class="wrap h-c"><p class="h-k rv">${esc(eyebrow(ctx))}</p><h1 class="h-t rv${t}" style="--d:1">${fancy(ctx.name)}</h1><div class="orn rv" style="--d:2" aria-hidden="true"></div><p class="h-s rv" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}</div>
+<div class="h-bg" data-e="img.herobg">${ph ? `<div class="img" role="img" aria-label="${esc(ph.cap || ctx.name)}" style="background-image:var(${ph.v})"></div>` : art(ctx, 'hero', 'hero')}</div><div class="h-veil"></div>
+<div class="wrap h-c"><p class="h-k rv" data-e="hero.eyebrow">${esc(eyebrow(ctx))}</p><h1 class="h-t rv${t}" data-e="hero.title" style="--d:1">${fancy(ctx.name)}</h1><div class="orn rv" style="--d:2" aria-hidden="true"></div><p class="h-s rv" data-e="hero.tagline" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}</div>
 <a class="h-scroll" href="#${esc(ctx.sections[0])}">Scopri</a></header>`;
     },
     audace(ctx) {
@@ -1808,7 +1863,7 @@ h1,h2,h3{font-weight:700}
       const st = stat0(ctx);
       const stamp = ctx.city ? ctx.city : (ctx.c.noun || '').toUpperCase();
       return `<header class="hero" id="top"><div class="wrap h-g">
-<div class="h-txt"><span class="h-tag rv"><i></i>${esc(eyebrow(ctx))}</span><h1 class="h-t rv" style="--d:1;--tsize:clamp(2.8rem,${vw.toFixed(1)}vw,${len > 16 ? 7 : 10}rem)">${fancy(ctx.name)}</h1><p class="h-s rv" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}</div>
+<div class="h-txt"><span class="h-tag rv" data-e="hero.eyebrow"><i></i>${esc(eyebrow(ctx))}</span><h1 class="h-t rv" data-e="hero.title" style="--d:1;--tsize:clamp(2.8rem,${vw.toFixed(1)}vw,${len > 16 ? 7 : 10}rem)">${fancy(ctx.name)}</h1><p class="h-s rv" data-e="hero.tagline" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}</div>
 <div class="h-media rv" style="--d:2"><div class="h-frame">${media(ctx, ph, 'hero', 'hero', ctx.name)}</div>${stamp ? `<div class="h-stamp">${esc(stamp)}</div>` : ''}${st ? `<div class="h-num"><span><b>${esc(fmtNum(st.n))}${esc(st.s)}</b>${esc(st.l.split(' ').slice(0, 2).join(' '))}</span></div>` : ''}</div>
 </div></header>${marquee(ctx)}`;
     },
@@ -1817,7 +1872,7 @@ h1,h2,h3{font-weight:700}
       const deck = ctx.desc ? ctx.desc.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ') : tpl((ctx.c.about.text || [''])[0], ctx);
       const idx = ctx.sections.filter((s) => SEC_LABEL[s] && s !== 'contatti').slice(0, 4);
       return `<header class="hero" id="top"><div class="wrap">
-<div class="h-g"><div class="h-txt"><span class="h-k rv">${esc(eyebrow(ctx))}</span><h1 class="h-t rv" style="--d:1">${fancy(ctx.tagline)}</h1><p class="h-d rv" style="--d:2">${esc(deck)}</p><p class="h-by rv" style="--d:2">Di <b>${esc(ctx.name)}</b>${ctx.city ? ' — ' + esc(ctx.city) : ''}</p>${heroBtns(ctx, 'rv" style="--d:3')}</div>
+<div class="h-g"><div class="h-txt"><span class="h-k rv" data-e="hero.eyebrow">${esc(eyebrow(ctx))}</span><h1 class="h-t rv" data-e="hero.tagline" style="--d:1">${fancy(ctx.tagline)}</h1><p class="h-d rv" data-e="hero.text" style="--d:2">${esc(deck)}</p><p class="h-by rv" style="--d:2">Di <b>${esc(ctx.name)}</b>${ctx.city ? ' — ' + esc(ctx.city) : ''}</p>${heroBtns(ctx, 'rv" style="--d:3')}</div>
 <figure class="h-fig rv" style="--d:1"><div class="h-img">${media(ctx, ph, 'hero', 'hero', ctx.name)}</div><figcaption><b>In copertina</b>${esc(ph && ph.cap ? ph.cap : ctx.name)}</figcaption></figure></div>
 ${idx.length > 1 ? `<nav class="h-idx rv" style="--n:${idx.length}" aria-label="In questa pagina">${idx.map((s, i) => `<a href="#${s}"><small>Pag. ${i + 2}</small>${esc(((ctx.c.titles || {})[s] || [])[0] || SEC_LABEL[s])}</a>`).join('')}</nav>` : ''}
 </div></header>`;
@@ -1830,7 +1885,7 @@ ${idx.length > 1 ? `<nav class="h-idx rv" style="--n:${idx.length}" aria-label="
       const trust = st.length ? `<div class="h-trust rv" style="--d:4"><span><span class="st">★★★★★</span> <b>${esc(fmtNum((st.find((x) => x.s === '★') || {}).n || 4.9))}</b> di media</span>${st[0] ? `<span><b>${esc(fmtNum(st[0].n) + st[0].s)}</b> ${esc(st[0].l)}</span>` : ''}</div>` : '';
       return `<header class="hero" id="top"><div class="h-mesh" aria-hidden="true"><i></i><i></i><i></i></div><div class="h-grid" aria-hidden="true"></div>
 <div class="wrap h-c"><a class="pill rv" href="${esc(ctx.secondary ? ctx.secondary.href : '#contatti')}"><b>${ctx.cat.id === 'prodotto' ? 'Novità' : esc(ctx.c.noun || 'Ciao')}</b><span>${esc(eyebrow(ctx))}</span>${icon('arrow')}</a>
-<h1 class="h-t rv${t}" style="--d:1">${fancy(ctx.name)}</h1><p class="h-s rv" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}${trust}
+<h1 class="h-t rv${t}" data-e="hero.title" style="--d:1">${fancy(ctx.name)}</h1><p class="h-s rv" data-e="hero.tagline" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}${trust}
 <div class="h-shot rv" style="--d:3"><div class="h-win">${ph ? media(ctx, ph, 'hero', 'wide') : useMock ? `<div class="m">${mockupArt(ctx)}</div>` : `<div class="m">${art(ctx, 'hero', 'wide')}</div>`}</div></div></div></header>`;
     },
     minimal(ctx) {
@@ -1840,8 +1895,8 @@ ${idx.length > 1 ? `<nav class="h-idx rv" style="--n:${idx.length}" aria-label="
       const desc = ctx.desc ? ctx.desc.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ') : tpl((ctx.c.about.text || [''])[0], ctx);
       return `<header class="hero" id="top"><div class="wrap">
 <div class="h-meta rv"><span>(${esc(ctx.cat.label.split(' / ')[0])})</span><span>${esc(ctx.city || 'Italia')} — ${new Date().getFullYear()}</span><span>Scorri ↓</span></div>
-<h1 class="h-t rv" style="--d:1;--tsize:clamp(3rem,${vw.toFixed(1)}vw,${len > 14 ? 8 : 12}rem)">${esc(ctx.name)}<span class="dot">.</span></h1>
-<div class="h-row rv" style="--d:2"><p class="h-s">${esc(ctx.tagline)}</p><div><p class="h-d">${esc(desc)}</p>${heroBtns(ctx)}</div></div>
+<h1 class="h-t rv" data-e="hero.title" style="--d:1;--tsize:clamp(3rem,${vw.toFixed(1)}vw,${len > 14 ? 8 : 12}rem)">${esc(ctx.name)}<span class="dot">.</span></h1>
+<div class="h-row rv" style="--d:2"><p class="h-s" data-e="hero.tagline">${esc(ctx.tagline)}</p><div><p class="h-d" data-e="hero.text">${esc(desc)}</p>${heroBtns(ctx)}</div></div>
 <figure class="h-img rv" style="--d:3;margin:0">${media(ctx, ph, 'hero', 'wide', ctx.c.noun)}${ph && ph.cap ? `<figcaption>${esc(ph.cap)}</figcaption>` : ''}</figure>
 </div></header>`;
     },
@@ -1857,7 +1912,7 @@ ${idx.length > 1 ? `<nav class="h-idx rv" style="--n:${idx.length}" aria-label="
       return `<header class="hero" id="top">
 <svg class="h-blob b1" viewBox="0 0 400 400" aria-hidden="true"><path d="${blobPath(200, 200, 180, rng(hash(ctx.name)), 7, 0.3)}" fill="currentColor"/></svg>
 <svg class="h-blob b2" viewBox="0 0 400 400" aria-hidden="true"><path d="${blobPath(200, 200, 180, rng(hash(ctx.name + 'b')), 6, 0.4)}" fill="currentColor"/></svg>
-<div class="wrap h-g"><div class="h-txt"><span class="h-k rv">${icon('leaf')}${esc(eyebrow(ctx))}</span><h1 class="h-t rv${t}" style="--d:1">${title}</h1><p class="h-s rv" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}
+<div class="wrap h-g"><div class="h-txt"><span class="h-k rv" data-e="hero.eyebrow">${icon('leaf')}${esc(eyebrow(ctx))}</span><h1 class="h-t rv${t}" data-e="hero.title" style="--d:1">${title}</h1><p class="h-s rv" data-e="hero.tagline" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}
 <div class="h-mini rv" style="--d:4">${(ctx.c.about.highlights || []).slice(0, 2).map((h) => `<span>${icon('check')}${esc(h)}</span>`).join('')}</div></div>
 <div class="h-media rv" style="--d:2"><div class="arch">${media(ctx, ph, 'hero', 'hero', ctx.name)}</div>
 <div class="stamp" aria-hidden="true"><svg class="ring" viewBox="0 0 120 120"><defs><path id="${rid}" d="M60 60 m-46 0 a46 46 0 1 1 92 0 a46 46 0 1 1 -92 0"/></defs><text font-family="${esc(ctx.t.fonts.ui)}" font-size="9.6" font-weight="700" letter-spacing="2.4" fill="currentColor"><textPath href="#${rid}" textLength="286">${ring}</textPath></text></svg>${icon(ctx.c.icon || 'heart')}</div>
@@ -1876,7 +1931,7 @@ ${st ? `<div class="h-note"><span class="st">★</span><span><b>${esc(fmtNum(st.
       const pics = [1, 0, 2].map((i, j) => `<div class="pic">${media(ctx, ph[i] || (j === 1 ? ph[0] : null), 'hero' + j, 'hero', ctx.name)}</div>`).join('');
       const t = ctx.name.length > 18 ? ' t-l' : '';
       return `<header class="hero" id="top">${shapes.map((s, i) => `<div class="fl f${i + 1}" aria-hidden="true">${s}</div>`).join('')}
-<div class="wrap h-c"><span class="sticker rv">${esc(eyebrow(ctx))}</span><h1 class="h-t rv${t}" style="--d:1">${fancy(ctx.name)}</h1><p class="h-s rv" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}
+<div class="wrap h-c"><span class="sticker rv" data-e="hero.eyebrow">${esc(eyebrow(ctx))}</span><h1 class="h-t rv${t}" data-e="hero.title" style="--d:1">${fancy(ctx.name)}</h1><p class="h-s rv" data-e="hero.tagline" style="--d:2">${esc(ctx.tagline)}</p>${heroBtns(ctx, 'rv" style="--d:3')}
 <div class="h-pics rv" style="--d:3">${pics}</div></div></header>${marquee(ctx)}`;
     },
   };
@@ -1896,6 +1951,22 @@ ${st ? `<div class="h-note"><span class="st">★</span><span><b>${esc(fmtNum(st.
 
   const fmtNum = (n) => (typeof n === 'number' ? n.toLocaleString('it-IT', { maximumFractionDigits: 1 }) : String(n));
 
+  // Menù strutturato dell'utente: barra delle categorie (se > 2), etichette, foto delle voci
+  function menuSection(ctx, i, groups) {
+    const many = groups.length > 2;
+    const titled = groups.some((g) => g.title);
+    let cols = groups;
+    if (groups.length === 1 && !titled && groups[0].items.length > 3) {
+      const it = groups[0].items, h = Math.ceil(it.length / 2);
+      cols = [{ title: '', ci: groups[0].ci, items: it.slice(0, h) }, { title: '', ci: groups[0].ci, items: it.slice(h), cont: true }];
+    }
+    const tabs = many && titled ? `<nav class="m-tabs rv" aria-label="Categorie"><div class="m-tabs-in">${groups.map((g) => `<a href="#mc-${g.ci}">${esc(g.title || 'Altro')}</a>`).join('')}</div></nav>` : '';
+    const item = (x) => `<li class="mi${x.photo ? ' has-ph' : ''}">${x.photo ? photoDiv(x, 'mi-ph') : ''}<div class="mi-b"><div class="mi-top"><span class="mi-n"${de(x, 'name')}>${esc(x.name)}</span>${x.price ? `<span class="mi-dots"></span><span class="mi-p"${de(x, 'price')}>${esc(x.price)}</span>` : ''}</div>${x.desc ? `<p class="mi-d"${de(x, 'description')}>${esc(x.desc)}</p>` : ''}${tagBadges(x)}</div></li>`;
+    const one = cols.length === 1 ? ' one' : '';
+    const spy = tabs ? `<script>(function(){var n=document.querySelector('.m-tabs');if(!n||!('IntersectionObserver' in window))return;var a=[].slice.call(n.querySelectorAll('a')),io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){a.forEach(function(x){var on=x.getAttribute('href')==='#'+e.target.id;x.classList.toggle('on',on);if(on&&x.scrollIntoView){var p=x.parentNode;p.scrollTo({left:x.offsetLeft-p.clientWidth/2+x.clientWidth/2,behavior:'smooth'})}})}})},{rootMargin:'-30% 0px -60% 0px'});document.querySelectorAll('.mg-h[id^=mc-]').forEach(function(h){io.observe(h)})})();<\/script>` : '';
+    return `<div class="wrap">${sectionHead(ctx, 'menu', i, { center: true })}${tabs}<div class="menu-wrap um${one}">${cols.map((g, j) => `<div class="mg rv" style="--d:${j % 2}">${g.title ? `<h3 class="mg-h" id="mc-${g.ci}" data-e="menu.cat.${g.ci}">${esc(g.title)}</h3>` : ''}<ul>${g.items.map(item).join('')}</ul></div>`).join('')}</div></div>${spy}`;
+  }
+
   /* ── SEZIONI ── */
   const SECTIONS = {
     chi(ctx, i) {
@@ -1905,9 +1976,9 @@ ${st ? `<div class="h-note"><span class="st">★</span><span><b>${esc(fmtNum(st.
       const hl = a.highlights || [];
       const title = (((ctx.c.titles || {}).chi || [])[1]) || a.title;
       return `<div class="wrap chi-grid"><figure class="chi-media rv">${media(ctx, ph, 'about', 'about', ctx.c.noun)}</figure>
-<div class="chi-body">${sectionHead(ctx, 'chi', i, { title })}<div class="prose rv" style="--d:1">${paras.map((p) => `<p>${esc(p)}</p>`).join('')}</div>
-${hl.length ? `<ul class="ticks rv" style="--d:2">${hl.map((h) => `<li>${icon('check')}<span>${esc(h)}</span></li>`).join('')}</ul>` : ''}
-<p class="sign rv" style="--d:3">— ${ctx.first ? esc(ctx.name) : 'Il team di ' + esc(ctx.name)}</p></div></div>`;
+<div class="chi-body">${sectionHead(ctx, 'chi', i, { title })}<div class="prose rv" style="--d:1">${paras.map((p, j) => `<p data-e="chi.text.${j}">${esc(p)}</p>`).join('')}</div>
+${hl.length ? `<ul class="ticks rv" style="--d:2">${hl.map((h, j) => `<li>${icon('check')}<span data-e="chi.item.${j}">${esc(h)}</span></li>`).join('')}</ul>` : ''}
+<p class="sign rv" data-e="chi.sign" style="--d:3">— ${ctx.first ? esc(ctx.name) : 'Il team di ' + esc(ctx.name)}</p></div></div>`;
     },
     servizi(ctx, i) {
       const d = ctx.itemsFor('servizi');
@@ -1919,10 +1990,11 @@ ${hl.length ? `<ul class="ticks rv" style="--d:2">${hl.map((h) => `<li>${icon('c
       const k = n === 1 ? 'k1' : n === 2 || n === 4 ? 'k2' : 'k3';
       const wideIdx = new Set();
       if (k === 'k3') { if (n % 3 === 1) { wideIdx.add(0); wideIdx.add(n - 1); } else if (n % 3 === 2) wideIdx.add(0); }
-      return `<div class="wrap">${sectionHead(ctx, 'servizi', i, { center: true })}<div class="cards ${k}">${list.map((s, j) => `<article class="card rv${wideIdx.has(j) ? ' wide' : ''}" style="--d:${j % 3}"><span class="c-n">${ctx.th === 'elegante' ? ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][j] : String(j + 1).padStart(2, '0')}</span><span class="c-i">${icon(s.icon)}</span><h3>${esc(s.title)}</h3>${s.text ? `<p>${esc(s.text)}</p>` : ''}${s.price ? `<span class="c-price">${esc(s.price)}</span>` : ''}</article>`).join('')}</div></div>`;
+      return `<div class="wrap">${sectionHead(ctx, 'servizi', i, { center: true })}<div class="cards ${k}">${list.map((s, j) => `<article class="card rv${wideIdx.has(j) ? ' wide' : ''}" style="--d:${j % 3}"><span class="c-n">${ctx.th === 'elegante' ? ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][j] : String(j + 1).padStart(2, '0')}</span><span class="c-i">${icon(s.icon)}</span><h3 data-e="servizi.item.${j}.title">${esc(s.title)}</h3>${s.text ? `<p data-e="servizi.item.${j}.text">${esc(s.text)}</p>` : ''}${s.price ? `<span class="c-price" data-e="servizi.item.${j}.price">${esc(s.price)}</span>` : ''}</article>`).join('')}</div></div>`;
     },
     menu(ctx, i) {
       const d = ctx.itemsFor('menu');
+      if (d.menu) return menuSection(ctx, i, d.groups);
       let groups = d.groups || [];
       if (groups.length === 1 && !groups[0].title && groups[0].items.length > 3) {
         const it = groups[0].items, h = Math.ceil(it.length / 2);
@@ -1938,7 +2010,7 @@ ${hl.length ? `<ul class="ticks rv" style="--d:2">${hl.map((h) => `<li>${icon('c
       const k = ctx.k;
       return `<div class="wrap">${sectionHead(ctx, 'prodotti', i)}<div class="prods">${list.map((x, j) => {
         const href = k.wa ? 'https://wa.me/' + k.wa + '?text=' + encodeURIComponent('Ciao! Vorrei informazioni su: ' + x.name) : '#contatti';
-        return `<article class="prod rv" style="--d:${j % 3}"><div class="prod-m">${media(ctx, pOf(j), 'prod' + j, 'tile', x.name, x.name)}</div><div class="prod-top"><h3>${esc(x.name)}</h3>${x.price ? `<span class="prod-p">${esc(x.price)}</span>` : ''}</div>${x.desc ? `<p>${esc(x.desc)}</p>` : '<p></p>'}<a class="lnk" href="${esc(href)}"${ext(href)}>${k.wa ? 'Chiedi su WhatsApp' : 'Richiedi informazioni'} ${icon('arrow')}</a></article>`;
+        return `<article class="prod rv" style="--d:${j % 3}"><div class="prod-m">${media(ctx, pOf(j), 'prod' + j, 'tile', x.name, x.name)}</div><div class="prod-top"><h3 data-e="prodotti.item.${j}.name">${esc(x.name)}</h3>${x.price ? `<span class="prod-p" data-e="prodotti.item.${j}.price">${esc(x.price)}</span>` : ''}</div>${x.desc ? `<p data-e="prodotti.item.${j}.text">${esc(x.desc)}</p>` : '<p></p>'}<a class="lnk" href="${esc(href)}"${ext(href)}>${k.wa ? 'Chiedi su WhatsApp' : 'Richiedi informazioni'} ${icon('arrow')}</a></article>`;
       }).join('')}</div></div>`;
     },
     progetti(ctx, i) {
@@ -1947,12 +2019,12 @@ ${hl.length ? `<ul class="ticks rv" style="--d:2">${hl.map((h) => `<li>${icon('c
       const ph = ctx.photos;
       const pOf = (j) => (ph.length ? ph[(j + (ph.length > 1 ? 1 : 0)) % ph.length] : null);
       const tags = ['Progetto', 'Caso studio', 'Lavoro recente', 'Collaborazione'];
-      return `<div class="wrap">${sectionHead(ctx, 'progetti', i)}<div class="works">${list.map((x, j) => `<article class="work rv" style="--d:${j % 2}"><div class="work-m">${media(ctx, pOf(j), 'work' + j, 'tile', x.name, x.name)}</div><div class="work-meta"><span>${String(j + 1).padStart(2, '0')} — ${esc(tags[j % tags.length])}</span><span>${esc(x.tag || x.price || '')}</span></div><h3>${esc(x.name)}</h3>${x.desc ? `<p>${esc(x.desc)}</p>` : ''}</article>`).join('')}</div></div>`;
+      return `<div class="wrap">${sectionHead(ctx, 'progetti', i)}<div class="works">${list.map((x, j) => `<article class="work rv" style="--d:${j % 2}"><div class="work-m">${media(ctx, pOf(j), 'work' + j, 'tile', x.name, x.name)}</div><div class="work-meta"><span>${String(j + 1).padStart(2, '0')} — ${esc(tags[j % tags.length])}</span><span>${esc(x.tag || x.price || '')}</span></div><h3 data-e="progetti.item.${j}.name">${esc(x.name)}</h3>${x.desc ? `<p data-e="progetti.item.${j}.text">${esc(x.desc)}</p>` : ''}</article>`).join('')}</div></div>`;
     },
     programma(ctx, i) {
       const d = ctx.itemsFor('programma');
       const list = [].concat(...(d.groups || []).map((g) => g.items)).slice(0, 14);
-      return `<div class="wrap">${sectionHead(ctx, 'programma', i, { center: true })}<ol class="tl">${list.map((x, j) => `<li class="tl-i rv" style="--d:${j % 3}"><div class="tl-t">${esc(x.time || String(j + 1).padStart(2, '0'))}</div><div class="tl-b"><h3>${esc(x.name)}</h3>${x.desc ? `<p>${esc(x.desc)}</p>` : ''}${x.price ? `<p><b>${esc(x.price)}</b></p>` : ''}</div></li>`).join('')}</ol></div>`;
+      return `<div class="wrap">${sectionHead(ctx, 'programma', i, { center: true })}<ol class="tl">${list.map((x, j) => `<li class="tl-i rv" style="--d:${j % 3}"><div class="tl-t" data-e="programma.item.${j}.time">${esc(x.time || String(j + 1).padStart(2, '0'))}</div><div class="tl-b"><h3 data-e="programma.item.${j}.name">${esc(x.name)}</h3>${x.desc ? `<p data-e="programma.item.${j}.text">${esc(x.desc)}</p>` : ''}${x.price ? `<p><b>${esc(x.price)}</b></p>` : ''}</div></li>`).join('')}</ol></div>`;
     },
     galleria(ctx, i) {
       const ph = ctx.photos;
@@ -1962,35 +2034,35 @@ ${hl.length ? `<ul class="ticks rv" style="--d:2">${hl.map((h) => `<li>${icon('c
       const pat = galPattern(tiles.length);
       return `<div class="wrap">${sectionHead(ctx, 'galleria', i, { center: true })}<div class="gal">${tiles.map((tl, j) => {
         const cls = pat[j] ? ' ' + pat[j] : '';
-        const cap = tl.cap ? `<span class="g-cap"><span>${esc(tl.cap)}</span></span>` : '';
-        if (tl.p) return `<button type="button" class="g-it rv${cls}" style="--d:${j % 3}" data-ph="${tl.p.n}" data-cap="${esc(tl.cap)}" aria-label="Apri foto${tl.cap ? ': ' + esc(tl.cap) : ' ' + (j + 1)}"><span class="m img" style="background-image:var(${tl.p.v})"></span>${cap}</button>`;
-        return `<div class="g-it is-art rv${cls}" style="--d:${j % 3}"><span class="m">${art(ctx, 'gal' + j, 'tile', tl.cap)}</span>${cap}</div>`;
+        const cap = tl.cap ? `<span class="g-cap"><span data-e="galleria.item.${j}.cap">${esc(tl.cap)}</span></span>` : '';
+        if (tl.p) return `<button type="button" class="g-it rv${cls}" style="--d:${j % 3}" data-ph="${tl.p.n}" data-cap="${esc(tl.cap)}" aria-label="Apri foto${tl.cap ? ': ' + esc(tl.cap) : ' ' + (j + 1)}"><span class="m img" data-e="img.gal${j}" style="background-image:var(${tl.p.v})"></span>${cap}</button>`;
+        return `<div class="g-it is-art rv${cls}" style="--d:${j % 3}"><span class="m" data-e="img.gal${j}">${art(ctx, 'gal' + j, 'tile', tl.cap)}</span>${cap}</div>`;
       }).join('')}</div></div>`;
     },
     numeri(ctx) {
       const st = (ctx.c.stats || []).slice(0, 4);
       return `<div class="wrap"><h2 class="sr">${esc(ctx.name)} in numeri</h2><div class="stats">${st.map((s, j) => {
         const dec = String(s.n).includes('.') ? 1 : 0;
-        return `<div class="rv" style="--d:${j}"><div class="st-n" data-to="${s.n}"><span class="st-v">${esc(fmtNum(s.n))}</span>${s.s ? `<small>${esc(s.s)}</small>` : ''}</div><p class="st-l">${esc(s.l)}</p></div>`;
+        return `<div class="rv" style="--d:${j}"><div class="st-n" data-to="${s.n}"><span class="st-v">${esc(fmtNum(s.n))}</span>${s.s ? `<small>${esc(s.s)}</small>` : ''}</div><p class="st-l" data-e="numeri.item.${j}.label">${esc(s.l)}</p></div>`;
       }).join('')}</div></div>`;
     },
     prezzi(ctx, i) {
       const plans = (ctx.c.plans || catById('altro').content.plans).slice(0, 3);
       const k = ctx.k;
       const href = ctx.has('contatti') ? '#contatti' : ctx.contactAction.href;
-      return `<div class="wrap">${sectionHead(ctx, 'prezzi', i, { center: true })}<div class="plans">${plans.map((p, j) => `<article class="plan rv${p.featured ? ' ft' : ''}" style="--d:${j}">${p.featured ? '<span class="badge">Il più scelto</span>' : ''}<span class="plan-n">${esc(p.n)}</span><div class="plan-p">${esc(p.p)}</div><div class="plan-per">${esc(p.per || '')}</div><ul>${p.f.map((f) => `<li>${icon('check')}<span>${esc(f)}</span></li>`).join('')}</ul><a class="btn ${p.featured ? 'btn-p' : 'btn-s'}" href="${esc(href)}"${ext(href)}>${k.wa ? 'Richiedi su WhatsApp' : 'Scegli ' + esc(p.n)}</a></article>`).join('')}</div></div>`;
+      return `<div class="wrap">${sectionHead(ctx, 'prezzi', i, { center: true })}<div class="plans">${plans.map((p, j) => `<article class="plan rv${p.featured ? ' ft' : ''}" style="--d:${j}">${p.featured ? '<span class="badge">Il più scelto</span>' : ''}<span class="plan-n" data-e="prezzi.item.${j}.name">${esc(p.n)}</span><div class="plan-p" data-e="prezzi.item.${j}.price">${esc(p.p)}</div><div class="plan-per" data-e="prezzi.item.${j}.per">${esc(p.per || '')}</div><ul>${p.f.map((f, fi) => `<li>${icon('check')}<span data-e="prezzi.item.${j}.f${fi}">${esc(f)}</span></li>`).join('')}</ul><a class="btn ${p.featured ? 'btn-p' : 'btn-s'}" data-e="prezzi.item.${j}.btn" href="${esc(href)}"${ext(href)}>${k.wa ? 'Richiedi su WhatsApp' : 'Scegli ' + esc(p.n)}</a></article>`).join('')}</div></div>`;
     },
     testimonianze(ctx, i) {
       const q = (ctx.c.testimonials || []).slice(0, 3);
-      return `<div class="wrap">${sectionHead(ctx, 'testimonianze', i, { center: true })}<div class="quotes">${q.map((x, j) => `<figure class="q rv" style="--d:${j}"><div class="q-s" aria-label="5 stelle su 5">★★★★★</div><blockquote>${esc(x.t)}</blockquote><figcaption class="q-a">${avatar(ctx, x.a, j)}<span><b>${esc(x.a)}</b><small>${esc(x.r)}</small></span></figcaption></figure>`).join('')}</div></div>`;
+      return `<div class="wrap">${sectionHead(ctx, 'testimonianze', i, { center: true })}<div class="quotes">${q.map((x, j) => `<figure class="q rv" style="--d:${j}"><div class="q-s" aria-label="5 stelle su 5">★★★★★</div><blockquote data-e="testimonianze.item.${j}.text">${esc(x.t)}</blockquote><figcaption class="q-a">${avatar(ctx, x.a, j)}<span><b data-e="testimonianze.item.${j}.name">${esc(x.a)}</b><small data-e="testimonianze.item.${j}.role">${esc(x.r)}</small></span></figcaption></figure>`).join('')}</div></div>`;
     },
     team(ctx, i) {
       const tm = (ctx.c.team && ctx.c.team.length ? ctx.c.team : catById('altro').content.team).slice(0, 4);
-      return `<div class="wrap">${sectionHead(ctx, 'team', i, { center: true })}<div class="team">${tm.map((p, j) => `<article class="tm rv" style="--d:${j}"><div class="tm-m">${avatar(ctx, p.n, j, true)}</div><h3>${esc(p.n)}</h3><p>${esc(p.r)}</p></article>`).join('')}</div></div>`;
+      return `<div class="wrap">${sectionHead(ctx, 'team', i, { center: true })}<div class="team">${tm.map((p, j) => `<article class="tm rv" style="--d:${j}"><div class="tm-m">${avatar(ctx, p.n, j, true)}</div><h3 data-e="team.item.${j}.name">${esc(p.n)}</h3><p data-e="team.item.${j}.role">${esc(p.r)}</p></article>`).join('')}</div></div>`;
     },
     faq(ctx, i) {
       const f = (ctx.c.faq || []).slice(0, 6);
-      return `<div class="wrap split">${sectionHead(ctx, 'faq', i)}<div class="faq-l rv" style="--d:1">${f.map((x, j) => `<details${j === 0 ? ' open' : ''}><summary>${esc(x.q)}${icon('plus')}</summary><p>${esc(x.a)}</p></details>`).join('')}</div></div>`;
+      return `<div class="wrap split">${sectionHead(ctx, 'faq', i)}<div class="faq-l rv" style="--d:1">${f.map((x, j) => `<details${j === 0 ? ' open' : ''}><summary data-e="faq.item.${j}.q">${esc(x.q)}${icon('plus')}</summary><p data-e="faq.item.${j}.a">${esc(x.a)}</p></details>`).join('')}</div></div>`;
     },
     orari(ctx, i) {
       const h = ctx.hoursList.length ? ctx.hoursList : parseHours('Lunedì – Venerdì: 09:00–19:00\nSabato: 09:00–13:00\nDomenica: chiuso');
@@ -2025,7 +2097,7 @@ ${hl.length ? `<ul class="ticks rv" style="--d:2">${hl.map((h) => `<li>${icon('c
 <form class="form rv" style="--d:1"${mailAttr}><div class="f2"><label class="fld"><span>Nome</span><input name="nome" autocomplete="name" required placeholder="Il tuo nome"></label><label class="fld"><span>Email</span><input name="email" type="email" autocomplete="email" required placeholder="nome@email.it"></label></div>
 <label class="fld"><span>Telefono <em style="font-style:normal;opacity:.6">(facoltativo)</em></span><input name="telefono" type="tel" autocomplete="tel" placeholder="+39 ..."></label>
 <label class="fld"><span>Messaggio</span><textarea name="messaggio" required placeholder="${ctx.first ? 'Raccontami' : 'Raccontaci'} di cosa hai bisogno…"></textarea></label>
-<button class="btn btn-p" type="submit">Invia messaggio ${icon('arrow')}</button><p class="fine">I tuoi dati servono solo per risponderti.</p>
+<button class="btn btn-p" type="submit" data-e="contatti.send">Invia messaggio ${icon('arrow')}</button><p class="fine" data-e="contatti.fine">I tuoi dati servono solo per risponderti.</p>
 <div class="form-ok" hidden tabindex="-1">${icon('check')}<b>Grazie!</b><p>${esc(thanks)}</p></div></form></div>`;
     },
     cta(ctx) {
@@ -2033,10 +2105,10 @@ ${hl.length ? `<ul class="ticks rv" style="--d:2">${hl.map((h) => `<li>${icon('c
       const a = ctx.contactAction;
       const ph = ctx.photos[2];
       const bg = ph && (ctx.th === 'elegante' || ctx.th === 'calore' || ctx.th === 'giocoso')
-        ? `<div class="cta-art cta-photo"><div class="img fill" style="background-image:var(${ph.v})"></div></div>`
-        : `<div class="cta-art">${art(ctx, 'cta', 'wide')}</div>`;
+        ? `<div class="cta-art cta-photo"><div class="img fill" data-e="img.cta" style="background-image:var(${ph.v})"></div></div>`
+        : `<div class="cta-art" data-e="img.cta">${art(ctx, 'cta', 'wide')}</div>`;
       const btn2 = ctx.k.tel && a.href !== ctx.k.tel ? `<a class="btn btn-s" href="${esc(ctx.k.tel)}">${icon('phone')}${esc(ctx.k.phone)}</a>` : ctx.has('contatti') && a.href !== '#contatti' ? `<a class="btn btn-s" href="#contatti">Scrivici</a>` : '';
-      return `<div class="wrap"><div class="cta-box rv">${bg}<h2>${fancy(tpl(cta.title || 'Parliamone', ctx))}</h2><p>${esc(tpl(cta.text || '', ctx))}</p><div class="btns"><a class="btn btn-p" href="${esc(a.href)}"${ext(a.href)}>${a.href.startsWith('http') ? icon('whatsapp') : ''}${esc(cta.button || a.label)}</a>${btn2}</div></div></div>`;
+      return `<div class="wrap"><div class="cta-box rv">${bg}<h2 data-e="cta.title">${fancy(tpl(cta.title || 'Parliamone', ctx))}</h2><p data-e="cta.text">${esc(tpl(cta.text || '', ctx))}</p><div class="btns"><a class="btn btn-p" data-e="cta.btn" href="${esc(a.href)}"${ext(a.href)}>${a.href.startsWith('http') ? icon('whatsapp') : ''}${esc(cta.button || a.label)}</a>${btn2}</div></div></div>`;
     },
   };
 
@@ -2089,11 +2161,11 @@ ${hl.length ? `<ul class="ticks rv" style="--d:2">${hl.map((h) => `<li>${icon('c
     const len = ctx.name.length;
     const big = (ctx.th === 'audace' || ctx.th === 'minimal') ? `<div class="wrap"><div class="foot-big" aria-hidden="true" style="--fbig:${Math.min(ctx.th === 'audace' ? 15 : 13, (ctx.th === 'audace' ? 175 : 150) / Math.max(len, 4)).toFixed(2)}vw">${esc(ctx.name)}${ctx.th === 'minimal' ? '<span class="dot">.</span>' : ''}</div></div>` : '';
     return `<footer class="foot"><div class="wrap"><div class="foot-g">
-<div>${brandHTML(ctx)}<p class="foot-tag">${esc(ctx.tagline)}</p>${soc.length ? `<div class="soc">${soc.join('')}</div>` : ''}</div>
+<div>${brandHTML(ctx)}<p class="foot-tag" data-e="footer.tagline">${esc(ctx.tagline)}</p>${soc.length ? `<div class="soc">${soc.join('')}</div>` : ''}</div>
 <div><h4>Esplora</h4><ul>${links}</ul></div>
 <div><h4>Contatti</h4><ul>${ct.join('')}</ul></div>
 ${hrs ? `<div><h4>Orari</h4><ul>${hrs}</ul></div>` : `<div><h4>${esc(ctx.c.noun ? titleCase(ctx.c.noun) : 'Info')}</h4><ul>${(ctx.c.about.highlights || []).slice(0, 3).map((h) => `<li>${esc(h)}</li>`).join('')}</ul></div>`}
-</div><div class="foot-b"><span>© ${year} ${esc(ctx.name)}. Tutti i diritti riservati.</span><a href="#top">Torna su ↑</a></div></div>${big}</footer>`;
+</div><div class="foot-b"><span data-e="footer.copy">© ${year} ${esc(ctx.name)}. Tutti i diritti riservati.</span><a href="#top">Torna su ↑</a></div></div>${big}</footer>`;
   }
 
   /* ── SCRIPT DEL SITO ── */
@@ -2140,6 +2212,7 @@ var ok=f.querySelector('.form-ok');f.classList.add('sent');if(ok){ok.hidden=fals
       '--maxw': '1200px', '--gut': 'clamp(20px,5vw,56px)', '--sy': 'clamp(84px,11vw,148px)', '--navh': '76px', '--r': '14px', '--r-lg': '24px', '--h2': 'clamp(2.2rem,4.8vw,3.8rem)', '--star': '#f5a524',
     };
     if (ctx.th === 'minimal') vars['--line'] = P.line;
+    if (lum(P.bg) < 0.2) Object.assign(vars, { '--m-green': '#7ee2a8', '--m-red': '#ff9a85', '--m-amber': '#f5c96a' });
     const rootVars = ':root{' + Object.keys(vars).map((k) => `${k}:${vars[k]}`).join(';') + '}';
     const photoVars = ctx.photos.length ? ':root{' + ctx.photos.map((p) => `${p.v}:${cssUrl(p.src)}`).join(';') + '}' : '';
 
