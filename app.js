@@ -279,6 +279,7 @@
     const last = s === STEP_COUNT - 1;
     els.next.hidden = last;
     els.next.textContent = stepHasData(s) ? 'Avanti →' : 'Salta →';
+    if (window.IdeaSito && window.IdeaSito.emit) window.IdeaSito.emit('render', s);
     els.generate.textContent = last ? '✨ Crea il mio sito' : '✨ Crea ora';
     els.generate.classList.toggle('wide', last);
     els.footGuidata.classList.toggle('is-last', last);
@@ -921,13 +922,20 @@
       accentColor: /^#[0-9a-f]{6}$/i.test(s.accentColor) ? s.accentColor : (/^#[0-9a-f]{6}$/i.test(d.accentColor || '') ? d.accentColor : ''),
       sections,
       items: s.items.trim(),
+      menu: window.IdeaSito && window.IdeaSito.menuForBrief ? window.IdeaSito.menuForBrief() : [],
       contacts,
       logo: s.logo || null,
       photos: s.photos.map((p) => ({ src: p.src, caption: (p.caption || '').trim() })),
     };
   }
 
-  const textBrief = (b) => { const { logo, photos, ...t } = b; return clone(t); };
+  const textBrief = (b) => {
+    const { logo, photos, ...t } = b;
+    const c = clone(t);
+    // le foto del menù restano fuori dalla cronologia: al loro posto una firma corta (cambia se cambia la foto)
+    (Array.isArray(c.menu) ? c.menu : []).forEach((g) => (g.items || []).forEach((it) => { if (it.photo) it.photo = 'img:' + it.photo.length + ':' + it.photo.slice(-12); }));
+    return c;
+  };
   const snapshotImages = (b) => ({ logo: b.logo || null, photos: (b.photos || []).map((p) => ({ src: p.src, caption: p.caption || '' })) });
 
   // ---------- Segnaposto immagini ----------
@@ -994,7 +1002,9 @@ Regole:
       L.push(`- Sezioni, in quest'ordine dopo l'hero iniziale: ${secs.map((id) => `${sectionLabel(id)} (id="${id}")`).join(', ')}.`);
       if (secs.includes('dove') && brief.contacts.address) L.push(`  Nella sezione «Dove siamo» inserisci una mappa con <iframe src="https://www.google.com/maps?q=${encodeURIComponent(brief.contacts.address)}&output=embed" loading="lazy"> e un pulsante «Apri in Maps» (https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brief.contacts.address)}).`);
     }
-    if (brief.items) L.push(`- ${ui.items} forniti dal cliente: usali TUTTI esattamente, con i prezzi indicati (formato "nome - prezzo" oppure "nome: descrizione"):\n${brief.items}`);
+    const menuTxt = window.IdeaSito && window.IdeaSito.menuForPrompt ? window.IdeaSito.menuForPrompt(brief.menu) : '';
+    if (menuTxt) L.push(`- ${ui.items} forniti dal cliente, divisi per categoria: usali TUTTI esattamente, con nomi, descrizioni e prezzi indicati; mostra le etichette tra parentesi quadre come piccoli badge con emoji; se ci sono più di 2 categorie aggiungi una barra di categorie che scorre alla categoria:\n${menuTxt}`);
+    else if (brief.items) L.push(`- ${ui.items} forniti dal cliente: usali TUTTI esattamente, con i prezzi indicati (formato "nome - prezzo" oppure "nome: descrizione"):\n${brief.items}`);
 
     const c = brief.contacts;
     const cl = [];
@@ -1164,6 +1174,19 @@ ${request}`;
     } catch (err) { console.warn('anteprima dal vivo', err); }
   }, 600);
 
+  // Rigenera subito il sito offline corrente con qualche campo della scheda cambiato (editor visivo)
+  function regenerateCurrent(patch) {
+    if (!current || isAI(current.engine) || !offlineAvailable()) return false;
+    const brief = { ...clone(current.brief), ...(patch || {}), logo: current.images.logo, photos: current.images.photos.map((p) => ({ ...p })) };
+    if (window.IdeaSito && window.IdeaSito.menuWithPhotos && brief.menu) brief.menu = window.IdeaSito.menuWithPhotos(brief.menu);
+    const html = window.generateOffline(brief);
+    if (typeof html !== 'string') return false;
+    current = { ...current, raw: toPlaceholders(html, current.images), brief: textBrief(brief) };
+    showCurrent({ keepScroll: true });
+    saveHistoryLater();
+    return true;
+  }
+
   let previewScroll = 0;
   window.addEventListener('message', (e) => {
     if (e.source === els.preview.contentWindow && e.data && typeof e.data.ideasitoScroll === 'number') previewScroll = e.data.ideasitoScroll;
@@ -1179,6 +1202,7 @@ ${request}`;
     setBusy(true);
     try {
       const brief = { ...clone(current.brief), theme: themeId, logo: current.images.logo, photos: current.images.photos.map((p) => ({ ...p })) };
+      if (window.IdeaSito && window.IdeaSito.menuWithPhotos) brief.menu = window.IdeaSito.menuWithPhotos(brief.menu);
       const html = window.generateOffline(brief);
       current = { ...current, raw: toPlaceholders(html, current.images), brief: textBrief(brief), engine: 'offline' };
       state.theme = themeId;
@@ -1234,11 +1258,12 @@ ${request}`;
     return String(html || '').replace(/data:([\w/+.-]+);base64,[A-Za-z0-9+/=]{300,}/g, (m, mime) => `data:${mime};base64,… [immagine ${kb(m.length * 0.75)}]`);
   }
 
-  function showHtml(html, { partial = false, keepScroll = false } = {}) {
+  function showHtml(html, { partial = false, keepScroll = false, silent = false } = {}) {
     if (!partial) currentHtml = html;
     els.empty.classList.add('hidden');
     if (!keepScroll && !partial) previewScroll = 0;
-    els.preview.srcdoc = partial ? html : withScrollKeeper(html, previewScroll);
+    const deco = !partial && window.IdeaSito && window.IdeaSito.decorateSrcdoc; // editor visivo (solo anteprima, mai nel download)
+    if (!silent) els.preview.srcdoc = partial ? html : (deco ? deco(withScrollKeeper(html, previewScroll)) : withScrollKeeper(html, previewScroll));
     if (!partial) els.codeText.textContent = codeDisplay(current ? current.raw : html);
     const view = document.querySelector('.tab.active').dataset.view;
     els.frameWrap.classList.toggle('hidden', view !== 'preview');
@@ -1246,9 +1271,10 @@ ${request}`;
     [els.copy, els.open, els.download].forEach((b) => (b.disabled = partial || !html));
   }
 
-  function showCurrent({ keepScroll = false } = {}) {
+  function showCurrent({ keepScroll = false, silent = false } = {}) {
     if (!current) return;
-    showHtml(substitute(current.raw, current.images), { keepScroll });
+    const tr = window.IdeaSito && window.IdeaSito.transformRaw; // modifiche fatte cliccando (features/visual-editor.js)
+    showHtml(substitute(tr ? tr(current.raw, current) : current.raw, current.images), { keepScroll, silent });
     els.refineBox.classList.remove('hidden');
     els.refineModel.classList.toggle('hidden', isAI(current.engine));
     renderRestyle();
@@ -1362,6 +1388,7 @@ ${request}`;
       sections: Array.isArray(b.sections) ? b.sections.slice() : [], sectionsCustom: Array.isArray(b.sections) && b.sections.length > 0,
       items: b.items || '', contacts: { ...base.contacts, ...(b.contacts || {}) },
     };
+    if (window.IdeaSito && window.IdeaSito.menuLoad) window.IdeaSito.menuLoad(b.menu);
     if (item.images) {
       state.logo = item.images.logo || null;
       state.photos = (item.images.photos || []).map((p) => ({ ...p }));
@@ -1525,6 +1552,20 @@ ${request}`;
   if (!themes().length || !offlineAvailable()) console.warn('IdeaSito: motore offline non disponibile.');
   loadImages().then(() => { renderMedia(); renderStep(); renderWizardHint(); });
 
+  // Hook condiviso per i moduli in features/ (estendere, non sostituire)
+  const IS = (window.IdeaSito = window.IdeaSito || {});
+  IS._ev = IS._ev || {};
+  if (!IS.on) IS.on = (ev, cb) => { (IS._ev[ev] = IS._ev[ev] || []).push(cb); };
+  if (!IS.emit) IS.emit = (ev, ...a) => (IS._ev[ev] || []).forEach((cb) => { try { cb(...a); } catch (err) { console.error(err); } });
+  Object.assign(IS, {
+    getState: () => state, save: saveState, render: renderAll, refreshLight, compressImage, toast, setStatus,
+    getCurrent: () => current, buildBrief,
+  });
+  Object.assign(IS, {
+    showCurrent, regenerate: regenerateCurrent, isAI, getHtml: () => currentHtml,
+    setRaw: (raw, opts) => { if (!current) return; current = { ...current, raw }; showCurrent({ keepScroll: true, ...(opts || {}) }); saveHistoryLater(); },
+  });
+
   // utile per i test
-  window.__ideasito = { getState: () => state, buildBrief, buildPrompt, substitute, toPlaceholders, getCurrent: () => current };
+  window.__ideasito ={ getState: () => state, buildBrief, buildPrompt, substitute, toPlaceholders, getCurrent: () => current };
 })();
