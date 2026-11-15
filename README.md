@@ -4,9 +4,11 @@ Descrivi la tua idea → l'AI crea il tuo sito web. **Gratis.**
 
 ## Come funziona
 
-1. Scrivi cosa vuoi (es. "sito per la mia pizzeria a Napoli con menù e prenotazioni WhatsApp").
-2. Scegli uno stile (opzionale) e premi **Crea il mio sito**.
-3. Guarda l'anteprima (desktop / tablet / telefono), chiedi modifiche a parole, poi **Scarica** il file `.html`.
+- **Modalità Guidata** (consigliata): 5 passi per spiegare bene la tua idea — Idea, Contenuti (sezioni e voci con prezzi), Immagini (logo e foto), Stile, Contatti.
+- **Modalità Veloce**: scrivi l'idea in una frase; il pulsante "Compila la scheda" riempie la modalità guidata in automatico.
+- **Logo e foto**: trascinali o caricali; vengono compressi nel browser e inseriti nel sito (navbar, copertina, chi siamo, galleria con lightbox).
+- **7 stili** offline: Elegante, Audace, Magazine, Aurora, Minimal, Calore, Giocoso.
+- Anteprima desktop / tablet / telefono, modifiche a parole (con l'AI), **Scarica** il file `.html`.
 
 ## Perché è gratis
 
@@ -32,4 +34,5 @@ Dopo un minuto il sito è online su `https://<tuo-utente>.github.io/Build-websit
 - `index.html` – interfaccia
 - `style.css` – stile
 - `app.js` – generazione AI, modifiche, anteprima, download, cronologia
-- `templates.js` – generatore offline basato su template
+- `offline/data.js` – temi, categorie e sezioni
+- `offline/engine.js` – generatore offline dei siti
