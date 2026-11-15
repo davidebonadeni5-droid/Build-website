@@ -3,104 +3,324 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IdeaSito — Descrivi la tua idea, ottieni un sito</title>
-  <meta name="description" content="Descrivi la tua idea e l'AI crea il tuo sito web. Gratis.">
+  <title>IdeaSito — Racconta la tua idea, ottieni un sito</title>
+  <meta name="description" content="Racconta la tua idea, carica logo e foto e ottieni un sito web bellissimo. Gratis, anche senza AI.">
+  <meta name="theme-color" content="#0d0f15">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M32 12l5 15 15 5-15 5-5 15-5-15-15-5 15-5z' fill='white'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
-  <script src="https://js.puter.com/v2/"></script>
+  <script src="https://js.puter.com/v2/" defer></script>
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">✦ IdeaSito</div>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">✦</span><span class="brand-name">IdeaSito</span></div>
     <span class="badge">Gratis</span>
+    <span class="topbar-sub">Racconta la tua idea, ottieni un sito vero</span>
+    <div class="topbar-actions">
+      <button id="history-open" class="btn ghost small" type="button">🕘 <span class="hide-sm">I miei siti</span></button>
+      <button id="reset-all" class="btn ghost small" type="button" title="Svuota la scheda e ricomincia">↺ <span class="hide-sm">Ricomincia</span></button>
+    </div>
   </header>
 
   <main class="layout">
-    <!-- Pannello sinistro: input -->
-    <section class="panel input-panel">
-      <h1>Descrivi la tua idea</h1>
-      <p class="sub">Scrivi cosa vuoi e l'AI crea il sito per te. Poi puoi chiedere modifiche e scaricarlo.</p>
-
-      <textarea id="idea" rows="7" placeholder="Es: Un sito per la mia pizzeria a Napoli, con menù, orari, foto e un pulsante per prenotare su WhatsApp. Colori caldi, stile rustico."></textarea>
-
-      <div class="examples">
-        <span class="label">Esempi:</span>
-        <button class="chip example" data-text="Portfolio per un fotografo di matrimoni, galleria foto elegante, sezione contatti e prezzi. Stile minimal bianco e nero.">📷 Portfolio</button>
-        <button class="chip example" data-text="Landing page per un'app di fitness chiamata FitGo: hero con slogan, funzionalità, prezzi con 3 piani, testimonianze, FAQ. Colori energici.">💪 App fitness</button>
-        <button class="chip example" data-text="Sito per un bar caffetteria di quartiere: menù con prezzi, orari di apertura, mappa, chi siamo. Stile accogliente.">☕ Bar</button>
-        <button class="chip example" data-text="Pagina personale di uno sviluppatore web: chi sono, competenze, progetti con card, contatti. Tema scuro moderno.">💻 Dev personale</button>
+    <!-- ================= Pannello sinistro ================= -->
+    <section class="panel input-panel" aria-label="Descrivi il tuo sito">
+      <div class="panel-head">
+        <div class="mode-switch" role="tablist" aria-label="Modalità">
+          <button type="button" role="tab" class="mode-btn" data-mode="guidata" aria-selected="true">🧭 Guidata <em>consigliata</em></button>
+          <button type="button" role="tab" class="mode-btn" data-mode="veloce" aria-selected="false">⚡ Veloce</button>
+        </div>
       </div>
 
-      <div class="row">
-        <label class="field">
-          <span>Stile</span>
-          <select id="style">
-            <option value="">Lascia scegliere all'AI</option>
-            <option value="moderno e pulito">Moderno</option>
-            <option value="minimal, molto spazio bianco">Minimal</option>
-            <option value="colorato e giocoso">Colorato</option>
-            <option value="scuro ed elegante">Scuro elegante</option>
-            <option value="rustico e caldo">Rustico</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Motore</span>
-          <select id="engine">
-            <option value="claude-sonnet-4">AI · Claude (consigliato)</option>
-            <option value="gpt-4o-mini">AI · GPT-4o mini (veloce)</option>
-            <option value="offline">Offline · Template (senza AI)</option>
-          </select>
-        </label>
+      <div class="panel-body" id="panel-body">
+        <!-- ---------- Modalità veloce ---------- -->
+        <div id="pane-veloce" class="mode-pane" hidden>
+          <h1>Descrivi la tua idea</h1>
+          <p class="sub">Scrivi in poche righe cosa vuoi: creo il sito per te. Più dettagli dai (nome, città, cosa offri, colori), più sarà su misura.</p>
+
+          <textarea id="idea" data-bind="idea" rows="7" placeholder="Es: Un sito per la mia pizzeria «Da Mario» a Napoli, con menù, orari, foto e un pulsante per prenotare su WhatsApp. Colori caldi, stile rustico."></textarea>
+
+          <div class="examples">
+            <span class="label">Esempi:</span>
+            <button type="button" class="chip example" data-text="Portfolio per un fotografo di matrimoni chiamato Luca Bianchi a Firenze: galleria foto elegante, prezzi dei servizi, testimonianze e contatti. Stile elegante bianco e nero.">📷 Fotografo</button>
+            <button type="button" class="chip example" data-text="Landing page per un'app di fitness chiamata FitGo: slogan, funzionalità, prezzi con 3 piani, testimonianze e FAQ. Colori energici, arancione.">💪 App fitness</button>
+            <button type="button" class="chip example" data-text="Sito per il bar caffetteria «Caffè Aurora» di quartiere a Torino: menù con prezzi, orari di apertura, mappa e chi siamo. Stile accogliente.">☕ Bar</button>
+            <button type="button" class="chip example" data-text="B&amp;B «La Corte» in Puglia vicino al mare: camere con prezzi, galleria, colazione con prodotti locali, dove siamo e prenotazione su WhatsApp.">🏡 B&amp;B</button>
+            <button type="button" class="chip example" data-text="Pagina personale di uno sviluppatore web: chi sono, competenze, progetti con card, contatti. Tema scuro moderno, blu.">💻 Sviluppatore</button>
+          </div>
+
+          <div class="quick-media" id="quick-media">
+            <div class="quick-media-head">
+              <span class="label">Logo e foto <span class="muted">(facoltativi)</span></span>
+              <div class="quick-media-btns">
+                <button type="button" class="btn small" data-pick="logo">🏷️ Logo</button>
+                <button type="button" class="btn small" data-pick="photos">🖼️ Foto</button>
+              </div>
+            </div>
+            <div id="quick-thumbs" class="quick-thumbs"></div>
+            <p class="hint drop-hint">Puoi anche trascinarle qui.</p>
+          </div>
+
+          <div class="row">
+            <label class="field">
+              <span>Stile</span>
+              <select id="quick-theme"></select>
+            </label>
+            <label class="field">
+              <span>Motore</span>
+              <select id="quick-engine"></select>
+            </label>
+          </div>
+
+          <div class="prefill-box">
+            <button id="prefill" type="button" class="btn outline">🧭 Compila la scheda dall'idea</button>
+            <p class="hint">Trasformo il testo in una scheda guidata che puoi rifinire: nome, tipo di attività, sezioni, colori…</p>
+          </div>
+          <div id="wizard-hint" class="note hidden"></div>
+        </div>
+
+        <!-- ---------- Modalità guidata ---------- -->
+        <div id="pane-guidata" class="mode-pane">
+          <ol class="stepper" id="stepper">
+            <li><button type="button" data-goto="0"><span class="dot">1</span><span class="st-label">Idea</span></button></li>
+            <li><button type="button" data-goto="1"><span class="dot">2</span><span class="st-label">Contenuti</span></button></li>
+            <li><button type="button" data-goto="2"><span class="dot">3</span><span class="st-label">Immagini</span></button></li>
+            <li><button type="button" data-goto="3"><span class="dot">4</span><span class="st-label">Stile</span></button></li>
+            <li><button type="button" data-goto="4"><span class="dot">5</span><span class="st-label">Contatti</span></button></li>
+          </ol>
+          <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+
+          <!-- Passo 1 -->
+          <section class="step" data-step="0" aria-labelledby="st1">
+            <header class="step-head">
+              <span class="step-kicker">Passo 1 di 5</span>
+              <h2 id="st1">Raccontaci la tua idea</h2>
+              <p class="sub">Chi sei, cosa offri e a chi ti rivolgi. Ogni campo è facoltativo: puoi saltare e tornare quando vuoi.</p>
+            </header>
+
+            <label class="field">
+              <span>Nome del progetto o dell'attività</span>
+              <input id="f-name" data-bind="name" type="text" autocomplete="organization" placeholder="Es. Pizzeria Da Mario">
+            </label>
+
+            <div class="field">
+              <span id="cat-label">Che tipo di sito è?</span>
+              <div id="cat-grid" class="cat-grid" role="radiogroup" aria-labelledby="cat-label"></div>
+            </div>
+
+            <label class="field">
+              <span>Slogan <span class="muted">— una frase che ti descrive</span></span>
+              <input id="f-tagline" data-bind="tagline" type="text" maxlength="120" placeholder="Es. La vera pizza napoletana, dal 1987">
+            </label>
+
+            <label class="field">
+              <span>Descrizione <span class="muted">— la tua storia, cosa ti rende speciale</span></span>
+              <textarea id="f-description" data-bind="description" rows="6" placeholder="Es. Siamo una pizzeria a conduzione familiare…"></textarea>
+            </label>
+            <div class="tips">
+              <strong>💡 Cosa scrivere</strong>
+              <ul>
+                <li>Da quanto tempo esisti e chi c'è dietro</li>
+                <li>Cosa offri e per chi (famiglie, aziende, sportivi…)</li>
+                <li>Cosa ti rende diverso dagli altri</li>
+                <li>Cosa vuoi che facciano i visitatori (chiamare, prenotare, comprare)</li>
+              </ul>
+              <button type="button" id="use-example" class="btn small ghost">✍️ Inserisci un testo d'esempio</button>
+            </div>
+          </section>
+
+          <!-- Passo 2 -->
+          <section class="step" data-step="1" aria-labelledby="st2" hidden>
+            <header class="step-head">
+              <span class="step-kicker">Passo 2 di 5</span>
+              <h2 id="st2">Cosa mettiamo nel sito?</h2>
+              <p class="sub">Tocca le sezioni per aggiungerle o toglierle, poi scegli l'ordine.</p>
+            </header>
+
+            <div class="field">
+              <span>Sezioni</span>
+              <div id="section-chips" class="section-chips"></div>
+            </div>
+
+            <div class="field">
+              <div class="field-row">
+                <span>Ordine nella pagina</span>
+                <button type="button" id="sections-reset" class="btn small ghost">↺ Consigliate</button>
+              </div>
+              <ol id="section-order" class="sort-list"></ol>
+              <p class="hint">Trascina le righe o usa le frecce. In cima c'è sempre la copertina con il nome.</p>
+            </div>
+
+            <label class="field">
+              <span id="items-label">Servizi o prodotti</span>
+              <textarea id="f-items" data-bind="items" rows="6"></textarea>
+            </label>
+            <p class="hint" id="items-hint">Una voce per riga. Aggiungi il prezzo con « - 7€ » o una descrizione con « : … ».</p>
+            <div id="items-preview" class="items-preview"></div>
+          </section>
+
+          <!-- Passo 3 -->
+          <section class="step" data-step="2" aria-labelledby="st3" hidden>
+            <header class="step-head">
+              <span class="step-kicker">Passo 3 di 5</span>
+              <h2 id="st3">Logo e foto</h2>
+              <p class="sub">Le tue immagini rendono il sito davvero tuo. Le comprimo qui nel browser: non vengono caricate su nessun server.</p>
+            </header>
+
+            <div class="field">
+              <span>Logo</span>
+              <div id="logo-zone" class="dropzone logo-zone" tabindex="0" role="button" aria-label="Carica il logo"></div>
+            </div>
+
+            <div class="field">
+              <div class="field-row">
+                <span>Foto <span class="muted" id="photo-count"></span></span>
+              </div>
+              <div id="photo-zone" class="dropzone photo-zone" tabindex="0" role="button" aria-label="Carica le foto">
+                <span class="dz-icon">🖼️</span>
+                <strong>Trascina qui le tue foto</strong>
+                <span class="muted">oppure <u>clicca per sceglierle</u> · JPG, PNG, WebP · fino a 12</span>
+              </div>
+              <ul id="photo-grid" class="photo-grid"></ul>
+              <p class="hint">⭐ La copertina va in alto, a tutta pagina. Le altre finiscono in «Chi siamo» e nella galleria, con le didascalie.</p>
+            </div>
+          </section>
+
+          <!-- Passo 4 -->
+          <section class="step" data-step="3" aria-labelledby="st4" hidden>
+            <header class="step-head">
+              <span class="step-kicker">Passo 4 di 5</span>
+              <h2 id="st4">Che stile ti piace?</h2>
+              <p class="sub">Ogni stile è un design completo: caratteri, colori, impaginazione.</p>
+            </header>
+
+            <div id="theme-grid" class="theme-grid" role="radiogroup" aria-label="Stile del sito"></div>
+
+            <div class="field">
+              <span>Colore principale</span>
+              <div id="accent-row" class="accent-row"></div>
+            </div>
+
+            <div class="field">
+              <span>Chi crea il sito?</span>
+              <div id="engine-cards" class="engine-cards" role="radiogroup" aria-label="Motore"></div>
+            </div>
+          </section>
+
+          <!-- Passo 5 -->
+          <section class="step" data-step="4" aria-labelledby="st5" hidden>
+            <header class="step-head">
+              <span class="step-kicker">Passo 5 di 5</span>
+              <h2 id="st5">Come ti trovano?</h2>
+              <p class="sub">Diventano pulsanti veri: chiama, scrivi, apri la mappa. Lascia vuoto quello che non ti serve.</p>
+            </header>
+
+            <div class="grid-2">
+              <label class="field"><span>📞 Telefono</span><input data-bind="contacts.phone" type="tel" autocomplete="tel" placeholder="Es. 081 123 4567"></label>
+              <label class="field"><span>💬 WhatsApp</span><input data-bind="contacts.whatsapp" type="tel" placeholder="Es. 333 123 4567"></label>
+              <label class="field"><span>✉️ Email</span><input data-bind="contacts.email" type="email" autocomplete="email" placeholder="Es. info@iltuosito.it"></label>
+              <label class="field"><span>📸 Instagram</span><input data-bind="contacts.instagram" type="text" placeholder="Es. @iltuoprofilo"></label>
+              <label class="field"><span>👍 Facebook</span><input data-bind="contacts.facebook" type="text" placeholder="Es. facebook.com/tuapagina"></label>
+              <label class="field"><span>📍 Indirizzo</span><input data-bind="contacts.address" type="text" autocomplete="street-address" placeholder="Es. Via Roma 12, Napoli"></label>
+            </div>
+            <p class="hint">Con l'indirizzo aggiungo la mappa e il pulsante «Apri in Maps».</p>
+            <label class="field">
+              <span>🕘 Orari <span class="muted">— una riga per giorno o gruppo di giorni</span></span>
+              <textarea data-bind="contacts.hours" rows="4" placeholder="Lun–Ven: 12:00–15:00, 19:00–23:30&#10;Sab–Dom: 19:00–24:00&#10;Martedì: chiuso"></textarea>
+            </label>
+
+            <div class="summary" id="summary"></div>
+          </section>
+        </div>
       </div>
 
-      <button id="generate" class="btn primary">✨ Crea il mio sito</button>
-
-      <div id="refine-box" class="refine hidden">
-        <h2>Vuoi cambiare qualcosa?</h2>
-        <textarea id="refine" rows="3" placeholder="Es: Rendi il titolo più grande, aggiungi una sezione recensioni, cambia i colori in blu."></textarea>
-        <button id="refine-btn" class="btn">🔁 Applica modifica</button>
+      <div class="panel-foot">
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+        <div class="foot-actions" id="foot-guidata">
+          <button id="prev" type="button" class="btn">← Indietro</button>
+          <button id="next" type="button" class="btn outline">Avanti →</button>
+          <button id="generate" type="button" class="btn primary">✨ Crea ora</button>
+        </div>
+        <div class="foot-actions" id="foot-veloce" hidden>
+          <button id="generate-quick" type="button" class="btn primary wide">✨ Crea il mio sito</button>
+        </div>
       </div>
-
-      <p id="status" class="status" role="status"></p>
-
-      <details class="history">
-        <summary>Siti creati in precedenza</summary>
-        <ul id="history-list"></ul>
-      </details>
     </section>
 
-    <!-- Pannello destro: anteprima -->
-    <section class="panel preview-panel">
+    <!-- ================= Pannello destro: anteprima ================= -->
+    <section class="panel preview-panel" id="preview-panel" aria-label="Anteprima">
       <div class="preview-toolbar">
-        <div class="tabs">
-          <button class="tab active" data-view="preview">Anteprima</button>
-          <button class="tab" data-view="code">Codice</button>
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab active" data-view="preview">Anteprima</button>
+          <button type="button" class="tab" data-view="code">Codice</button>
         </div>
         <div class="devices">
-          <button class="icon-btn device active" data-w="100%" title="Desktop">🖥️</button>
-          <button class="icon-btn device" data-w="768px" title="Tablet">📱</button>
-          <button class="icon-btn device" data-w="390px" title="Telefono">📞</button>
+          <button type="button" class="icon-btn device active" data-w="100%" title="Desktop" aria-label="Larghezza desktop">🖥️</button>
+          <button type="button" class="icon-btn device" data-w="768px" title="Tablet" aria-label="Larghezza tablet">📱</button>
+          <button type="button" class="icon-btn device" data-w="390px" title="Telefono" aria-label="Larghezza telefono">📞</button>
         </div>
         <div class="actions">
-          <button id="copy" class="btn small" disabled>Copia</button>
-          <button id="open" class="btn small" disabled>Apri</button>
-          <button id="download" class="btn small primary" disabled>⬇ Scarica</button>
+          <button id="copy" type="button" class="btn small" disabled>Copia</button>
+          <button id="open" type="button" class="btn small" disabled>Apri</button>
+          <button id="download" type="button" class="btn small primary" disabled>⬇ Scarica</button>
         </div>
       </div>
 
       <div class="stage">
         <div id="empty" class="empty">
-          <div class="empty-icon">🌐</div>
-          <p>Il tuo sito apparirà qui.</p>
+          <div class="empty-art" aria-hidden="true">
+            <span class="ea-win"><i></i><i></i><i></i></span>
+            <span class="ea-hero"></span>
+            <span class="ea-row"><b></b><b></b><b></b></span>
+          </div>
+          <h3>Il tuo sito apparirà qui</h3>
+          <ol class="empty-steps">
+            <li><b>1</b> Racconta l'idea</li>
+            <li><b>2</b> Aggiungi logo e foto</li>
+            <li><b>3</b> Scegli lo stile e crea</li>
+          </ol>
         </div>
         <div id="frame-wrap" class="frame-wrap hidden">
-          <iframe id="preview" title="Anteprima del sito" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
+          <iframe id="preview" title="Anteprima del sito" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
         </div>
         <pre id="code" class="code hidden"><code id="code-text"></code></pre>
+        <div id="stage-status" class="stage-status hidden" aria-hidden="true"><span class="spinner"></span><span id="stage-status-text"></span></div>
+      </div>
+
+      <div id="refine-box" class="refine hidden">
+        <div id="restyle" class="restyle hidden">
+          <span class="label">Prova un altro stile:</span>
+          <div id="restyle-list" class="restyle-list"></div>
+        </div>
+        <p id="live-hint" class="live-hint hidden"><span class="live-dot" aria-hidden="true"></span>Anteprima dal vivo: ogni modifica alla scheda a sinistra si vede subito qui.</p>
+        <div class="refine-row">
+          <textarea id="refine" rows="2" placeholder="Chiedi una modifica all'AI: «metti il menù prima di chi siamo», «titolo più grande», «aggiungi una sezione recensioni»…" aria-label="Modifica richiesta"></textarea>
+          <div class="refine-side">
+            <select id="refine-model" class="hidden" aria-label="AI per le modifiche">
+              <option value="claude-sonnet-4">con Claude</option>
+              <option value="gpt-4o-mini">con GPT-4o mini</option>
+            </select>
+            <button id="refine-btn" type="button" class="btn primary">🔁 Applica</button>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
-  <script src="templates.js"></script>
+  <dialog id="history-dialog" class="dialog" aria-labelledby="history-title">
+    <div class="dialog-head">
+      <h2 id="history-title">I miei siti</h2>
+      <button type="button" class="icon-btn" id="history-close" aria-label="Chiudi">✕</button>
+    </div>
+    <p class="sub">Salvati solo in questo browser.</p>
+    <ul id="history-list" class="history-list"></ul>
+  </dialog>
+
+  <input id="logo-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" hidden>
+  <input id="photos-input" type="file" accept="image/*" multiple hidden>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script src="offline/data.js"></script>
+  <script src="offline/engine.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
